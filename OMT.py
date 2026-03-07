@@ -64,8 +64,9 @@ def run_nmap(scan, args, timeout, output_dir):
     """
 
     # Extract scan parameters from JSON entry
-    name = scan.get("name", "scan")
+    team_name = scan.get("name", "scan")
     target = scan.get("target")
+    
     # timeout = scan.get("timeout")
 
 
@@ -75,7 +76,7 @@ def run_nmap(scan, args, timeout, output_dir):
 
     # Build per-scan output file path
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{name}_{timestamp}"
+    filename = f"{team_name}_{timestamp}"
     output_file = output_dir / filename
 
 
@@ -89,7 +90,7 @@ def run_nmap(scan, args, timeout, output_dir):
         str(output_file)
     ]
 
-    print(f"[+] Starting scan: {name}")
+    print(f"[+] Starting scan: {team_name}")
     print(f"    Command: {' '.join(cmd)}")
 
     try:
@@ -109,39 +110,39 @@ def run_nmap(scan, args, timeout, output_dir):
         for line in result.stdout:
             line = line.rstrip()
             if any(line.startswith(p) for p in PROGRESS_PATTERNS):
-                print(f"    [{name}] {line}")
+                print(f"    [{team_name}] {line}")
         returncode = result.wait()
 
         
         # Non-zero exit code indicates failure
         if result.returncode != 0:
             return {
-                "name": name,
+                "name": team_name,
                 "status": "error",
                 "stderr": result.stderr
             }
         else:
             xml_file = output_file.with_suffix(".xml")
-            backup_file = output_dir / f"{name}_latest.xml"
+            backup_file = output_dir / f"{team_name}_latest.xml"
             shutil.copy2(xml_file, backup_file)
         
 
         # Successful scan
         return {
-            "name": name,
+            "name": team_name,
             "status": "success",
             "output": str(output_file)
         }
     except subprocess.TimeoutExpired as e:
         return {
-            "name": name,
+            "name": team_name,
             "status": "timeout",
             "error": f"Scan exceeded {timeout}s"
         }
     except Exception as e:
         # Catch unexpected runtime errors (OS issues, missing nmap, etc.)
         return {
-            "name": name,
+            "name": team_name,
             "status": "exception",
             "error": str(e)
         }
@@ -159,13 +160,18 @@ def main():
         print("[!] Input file does not exist")
         sys.exit(1)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    
 
     config = load_config(input_path)
 
     scans = config.get("scans", [])
     args = config.get("args")
     timeout = config.get("timeout")
+    scan_name = config.get("name")
+
+    output_path = output_dir / scan_name
+
+    output_path.mkdir(parents=True, exist_ok=True)
 
     if not scans:
         print("[!] No scans defined in JSON")
@@ -196,7 +202,7 @@ def main():
         # We collect all Future objects in a list
         # so we can track completion later.
         futures = [
-            executor.submit(run_nmap, scan, args, timeout, output_dir)
+            executor.submit(run_nmap, scan, args, timeout, output_path)
             for scan in scans
         ]
 
