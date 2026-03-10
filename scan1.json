@@ -1,15 +1,39 @@
 {
-  "args": "-T4 --top-ports 1000 -A --open --host-timeout 300s --stats-every 10s",
+  "args": "-T4 --top-ports 1000 -A --host-timeout 300s --stats-every 30s",
   "timeout": "600",
-  "name": "quick",
+  "name": "bigly",
   "scans": [
     {
       "name": "team01",
-      "target": "192.168.56.0/24"
+      "target": "192.168.56.0/24 192.168.1.3/24"
     },
     {
       "name": "team02",
       "target": "192.168.1.1"
+    },
+    {
+      "name": "team03",
+      "target": "192.168.1.119"
+    },
+    {
+      "name": "team04",
+      "target": "192.168.1.127"
+    },
+    {
+      "name": "team05",
+      "target": "192.168.1.155"
+    },
+    {
+      "name": "team06",
+      "target": "192.168.1.186"
+    },
+    {
+      "name": "team07",
+      "target": "192.168.1.201"
+    },
+    {
+      "name": "team08",
+      "target": "192.168.1.5"
     }
   ]
 }

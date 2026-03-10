@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import shutil
 from diff import diff
+from diff import send_discord
 
 
 
@@ -66,9 +67,6 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
     # Extract scan parameters from JSON entry
     team_name = scan.get("name", "scan")
     target = scan.get("target")
-    
-    # timeout = scan.get("timeout")
-
 
     # Target is mandatory — abort this scan if missing
     if not target:
@@ -101,12 +99,13 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            # timeout=int(timeout), # seconds
+            timeout=int(timeout), # seconds
             bufsize=1
         )
 
         PROGRESS_PATTERNS = ("Stats:", "Timing:", "ETC:")
 
+        # Processes updates from NMAP as available by the --stats-every flag
         for line in result.stdout:
             line = line.rstrip()
             if any(line.startswith(p) for p in PROGRESS_PATTERNS):
@@ -122,9 +121,11 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
                 "stderr": result.stderr
             }
         else:
+            # Create backup of latest scan
             xml_file = output_file.with_suffix(".xml")
             backup_file = output_dir / f"{team_name}_latest.xml"
             shutil.copy2(xml_file, backup_file)
+            # Send scans for compare and for reporting to Discord
             diff(xml_file, output_dir, team_name, scan_name)
 
         # Successful scan
@@ -155,22 +156,23 @@ def main():
     input_path = Path(args.input_file)
     output_dir = Path(args.output_dir)
 
-    # Validate paths
+    # Validate input file path and load
     if not input_path.exists():
         print("[!] Input file does not exist")
         sys.exit(1)
 
+    # Process config JSON file
     config = load_config(input_path)
-
     scans = config.get("scans", [])
     args = config.get("args")
     timeout = config.get("timeout")
     scan_name = config.get("name")
 
+    # Validate output path
     output_path = output_dir / scan_name
-
     output_path.mkdir(parents=True, exist_ok=True)
 
+    # Validate values from JSON (mostly to see if they exist)
     if not scans:
         print("[!] No scans defined in JSON")
         sys.exit(1)
@@ -222,6 +224,7 @@ def main():
             else:
                 print(f"[✗] {result['name']} failed")
                 print(result)
+                send_discord(f"[✗] {result['name']} failed " + result)
 
 
     print("\n=== Summary ===")
@@ -230,6 +233,7 @@ def main():
         print(f"{r['name']}: {r['status']}")
 
     print("[+] All scans finished")
+    send_discord("# Scans complete! Full Scans can be found here: http://192.168.1.1")
 
 
 if __name__ == "__main__":
