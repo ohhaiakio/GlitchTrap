@@ -1,6 +1,6 @@
 {
-  "args": "-T4 --top-ports 1000 -A --host-timeout 300s --stats-every 30s",
-  "timeout": "600",
+  "args": "-T4 --top-ports 1000 -A --host-timeout 100s --stats-every 30s",
+  "timeout": "300",
   "name": "bigly",
   "scans": [
     {

@@ -1,6 +1,6 @@
 {
-  "args": "-T4 --top-ports 1000 -A --open --host-timeout 3s --stats-every 30s",
-  "timeout": "2",
+  "args": "-T4 --top-ports 1000 -A --open --host-timeout 300s --stats-every 30s",
+  "timeout": "200",
   "name": "test",
   "scans": [
     {

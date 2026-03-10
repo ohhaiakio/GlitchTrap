@@ -10,7 +10,7 @@ from datetime import datetime
 import shutil
 from diff import diff
 from diff import send_discord
-
+import time, os, signal
 
 
 def parse_args():
@@ -99,18 +99,25 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=int(timeout), # seconds
+            # timeout=int(timeout), # seconds
             bufsize=1
         )
 
         PROGRESS_PATTERNS = ("Stats:", "Timing:", "ETC:")
-
+        start_time = time.monotonic()
         # Processes updates from NMAP as available by the --stats-every flag
         for line in result.stdout:
             line = line.rstrip()
             if any(line.startswith(p) for p in PROGRESS_PATTERNS):
                 print(f"    [{team_name}] {line}")
-        returncode = result.wait()
+            elapsed = time.monotonic() - start_time
+            print(f"[DEBUG] elapsed={elapsed:.2f}s, timeout={timeout}")  # <-- add this
+            if time.monotonic() - start_time > int(timeout):
+                result.kill()
+                result.stdout.close()
+                raise subprocess.TimeoutExpired(cmd, timeout)
+        elapsed = time.monotonic() - start_time
+        returncode = result.wait(timeout=max(0, int(timeout) - elapsed))
 
         
         # Non-zero exit code indicates failure
@@ -224,7 +231,7 @@ def main():
             else:
                 print(f"[✗] {result['name']} failed")
                 print(result)
-                send_discord(f"[✗] {result['name']} failed " + result)
+                send_discord(f"[✗] {result['name']} failed - " + result['error'])
 
 
     print("\n=== Summary ===")
