@@ -1,0 +1,92 @@
+# Old Man Touchy (OMT)
+
+A concurrent Nmap scanning tool that runs multiple scans in parallel from a JSON config, diffs results against previous runs, and reports new hosts and open ports to a Discord webhook.
+
+## Requirements
+
+### System
+
+- Python 3.10+
+- `nmap` installed and available in `$PATH`
+
+### Python packages
+
+```
+pip install -r requirements.txt
+```
+
+`requirements.txt` includes:
+- `python-libnmap` — XML result parsing
+- `requests` — Discord webhook delivery
+
+## External Configuration
+
+### Discord Webhook
+
+Create a file named `webhook.link` in the project root containing your Discord webhook URL (no trailing newline required):
+
+```
+https://discord.com/api/webhooks/<id>/<token>
+```
+
+OMT will exit at startup if this file is missing.
+
+## Scan Config JSON
+
+Scans are defined in a JSON file with the following structure:
+
+```json
+{
+  "name": "scan_set_name",
+  "args": "-T4 --top-ports 1000 -A --host-timeout 100s --stats-every 30s",
+  "timeout": "300",
+  "scans": [
+    { "name": "team01", "target": "192.168.1.0/24" },
+    { "name": "team02", "target": "10.0.0.5" }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `name` | Label for this scan set. Used as the output subdirectory name and in Discord messages. |
+| `args` | Nmap flags applied to every scan in this set. |
+| `timeout` | Per-scan timeout in seconds. |
+| `scans` | List of scan entries. Each requires a `name` and a `target` (IP, CIDR, or space-separated targets). |
+
+## Usage
+
+```
+python OMT.py <INPUT_JSON> <OUTPUT_DIR>
+```
+
+**Example:**
+
+```
+python OMT.py scan1.json ./results
+```
+
+Results are written to `<OUTPUT_DIR>/<scan_name>/` in Nmap's three output formats (`.nmap`, `.xml`, `.gnmap`). A `<team>_latest.xml` backup is kept per target for diffing, alongside a `<team>_known_hosts.json` file that tracks all previously seen hosts and ports.
+
+Up to 4 scans run concurrently. Discord notifications are sent after each scan completes (reporting new hosts/ports) and once when all scans finish.
+
+## Output Structure
+
+```
+results/
+└── <scan_name>/
+    ├── team01_20260310_120000.xml
+    ├── team01_20260310_120000.nmap
+    ├── team01_20260310_120000.gnmap
+    ├── team01_latest.xml
+    └── team01_known_hosts.json
+```
+
+## Discord Notifications
+
+OMT posts to Discord:
+- **After each scan** — lists any new hosts or newly opened ports compared to all previous runs.
+- **On scan failure or timeout** — posts an error message.
+- **When all scans finish** — posts a completion summary.
+
+New findings are tracked cumulatively in `<team>_known_hosts.json` so repeat scans only alert on genuinely new activity.
