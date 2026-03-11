@@ -2,6 +2,8 @@
 
 A concurrent Nmap scanning tool that runs multiple scans in parallel from a JSON config, diffs results against previous runs, and reports new hosts and open ports to a Discord webhook.
 
+This tool is specificially made for use for CCDC and may require modification for general use.
+
 ## Requirements
 
 ### System
@@ -90,3 +92,61 @@ OMT posts to Discord:
 - **When all scans finish** — posts a completion summary.
 
 New findings are tracked cumulatively in `<team>_known_hosts.json` so repeat scans only alert on genuinely new activity.
+
+## Other Considerations
+
+### Web access to logs (dev)
+
+To host logs in a place where other team members can access them, a simple python web server can be used:
+
+`sudo python3 -m http.server 80`
+
+### SMB access to logs
+
+To set up a simple SMB Share
+
+```
+sudo apt update
+sudo apt install samba samba-common-bin
+sudo nano /etc/samba/smb.conf
+```
+
+Then add the following:
+
+```
+[shared]
+    path = /home/yourusername/shared
+    browsable = yes
+    read only = yes
+    guest ok = yes
+    guest only = yes
+```
+
+Finally use `sudo systemctl restart smbd` to restart the service and activate the shares.
+
+User can access the share via:
+
+#### From Linux:
+
+`smbclient //your-linux-ip/shared -N`
+
+(-N means no password)
+
+#### From Windows:
+
+Open File Explorer
+Type `\\your-linux-ip\shared` in the address bar
+It should connect without prompting for credentials
+
+#### From Mac:
+
+Finder → Go → Connect to Server
+Enter `smb://your-linux-ip/shared`
+
+#### Common Issues
+Permission denied? Make sure the directory is readable:
+`chmod 755 ~/shared`
+Share not showing up? Test the config:
+`testparm`
+Firewall blocking? Allow Samba:
+`sudo ufw allow 139,445/tcp`
