@@ -1,4 +1,4 @@
-# Old Man Touchy (OMT)
+# GlitchTrap
 
 A concurrent Nmap scanning tool that runs multiple scans in parallel from a JSON config, diffs results against previous runs, and reports new hosts and open ports to a Discord webhook.
 
@@ -31,7 +31,7 @@ Create a file named `webhook.link` in the project root containing your Discord w
 https://discord.com/api/webhooks/<id>/<token>
 ```
 
-OMT will exit at startup if this file is missing.
+GlitchTrap will exit at startup if this file is missing.
 
 ## Scan Config JSON
 
@@ -59,13 +59,13 @@ Scans are defined in a JSON file with the following structure:
 ## Usage
 
 ```
-python OMT.py <INPUT_JSON> <OUTPUT_DIR>
+python GlitchTrap.py <INPUT_JSON> <OUTPUT_DIR>
 ```
 
 **Example:**
 
 ```
-python OMT.py scan1.json ./results
+python GlitchTrap.py scan1.json ./results
 ```
 
 Results are written to `<OUTPUT_DIR>/<scan_name>/` in Nmap's three output formats (`.nmap`, `.xml`, `.gnmap`). A `<team>_latest.xml` backup is kept per target for diffing, alongside a `<team>_known_hosts.json` file that tracks all previously seen hosts and ports.
@@ -86,7 +86,7 @@ results/
 
 ## Discord Notifications
 
-OMT posts to Discord:
+GlitchTrap posts to Discord:
 - **After each scan** — lists any new hosts or newly opened ports compared to all previous runs.
 - **On scan failure or timeout** — posts an error message.
 - **When all scans finish** — posts a completion summary.

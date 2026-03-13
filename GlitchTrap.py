@@ -15,9 +15,9 @@ import time, os, signal
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog="Old Man Touchy (OMT)",
+        prog="GlitchTrap",
         description="Run multiple Nmap scans from JSON config",
-        epilog="Example: OMT.py teams_short.json ./results"
+        epilog="Example: GlitchTrap.py teams_short.json ./results"
     )
 
     parser.add_argument(
