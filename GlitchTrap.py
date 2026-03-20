@@ -102,6 +102,7 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
         # stdout/stderr are captured for error reporting.
         result = subprocess.Popen(
             cmd,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
