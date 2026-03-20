@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import shutil
 from diff import diff, send_discord, init_webhook
-import time, os, signal
+import time, os, signal, termios
 
 
 def parse_args():
@@ -88,9 +88,9 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
     # (avoids shell=True injection risks)
     cmd = [
         "nmap",
-        *args.split(),     # Split argument string into flags
-        target,
-        "-oA",             # Normal all formats
+        *args.split(),       # Split argument string into flags
+        *target.split(),     # Split space-separated targets into individual args
+        "-oA",               # Normal all formats
         str(output_file)
     ]
 
@@ -165,6 +165,18 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
 
 
 def main():
+    # Save terminal state and restore on exit to prevent echo loss
+    fd = sys.stdin.fileno() if sys.stdin.isatty() else None
+    saved_tty = termios.tcgetattr(fd) if fd is not None else None
+
+    try:
+        _main()
+    finally:
+        if fd is not None and saved_tty is not None:
+            termios.tcsetattr(fd, termios.TCSADRAIN, saved_tty)
+
+
+def _main():
 
     args = parse_args()
 
