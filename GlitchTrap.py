@@ -8,8 +8,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import shutil
-from diff import diff
-from diff import send_discord
+from diff import diff, send_discord, init_webhook
 import time, os, signal
 
 
@@ -30,6 +29,13 @@ def parse_args():
         "output_dir",
         metavar="OUTPUT_DIR",
         help="Directory to store scan results"
+    )
+
+    parser.add_argument(
+        "--webhook",
+        metavar="FILE",
+        help="Path to a file containing the Discord webhook URL (optional; omit to disable Discord notifications)",
+        default=None
     )
 
     return parser.parse_args()
@@ -161,6 +167,15 @@ def main():
 
     args = parse_args()
 
+    if args.webhook:
+        try:
+            with open(args.webhook, "r", encoding="utf-8") as f:
+                webhook_url = f.read().strip()
+        except Exception as e:
+            print(f"[!] Failed to read webhook file: {e}")
+            sys.exit(1)
+        init_webhook(webhook_url)
+
     input_path = Path(args.input_file)
     output_dir = Path(args.output_dir)
 
@@ -242,7 +257,7 @@ def main():
 
     print("[+] All scans finished")
     if any(r.get("has_findings") for r in results):
-        send_discord("# Scans complete! Full Scans can be found here: http://10.62.128.2")
+        send_discord("## Scans complete! Full Scans can be found here: http://10.62.128.2")
 
 
 if __name__ == "__main__":

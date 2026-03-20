@@ -25,13 +25,19 @@ pip install -r requirements.txt
 
 ### Discord Webhook
 
-Create a file named `webhook.link` in the project root containing your Discord webhook URL (no trailing newline required):
+Discord notifications are optional. Pass the path to a file containing your webhook URL via the `--webhook` flag at runtime:
+
+```
+python GlitchTrap.py scan1.json ./results --webhook /path/to/webhook.txt
+```
+
+The file should contain only the webhook URL, e.g.:
 
 ```
 https://discord.com/api/webhooks/<id>/<token>
 ```
 
-GlitchTrap will exit at startup if this file is missing.
+If `--webhook` is omitted, all Discord notifications are silently skipped and the tool runs normally.
 
 ## Scan Config JSON
 
@@ -59,13 +65,19 @@ Scans are defined in a JSON file with the following structure:
 ## Usage
 
 ```
-python GlitchTrap.py <INPUT_JSON> <OUTPUT_DIR>
+python GlitchTrap.py <INPUT_JSON> <OUTPUT_DIR> [--webhook FILE]
 ```
 
-**Example:**
+**Example (without Discord):**
 
 ```
 python GlitchTrap.py scan1.json ./results
+```
+
+**Example (with Discord):**
+
+```
+python GlitchTrap.py scan1.json ./results --webhook /path/to/webhook.txt
 ```
 
 Results are written to `<OUTPUT_DIR>/<scan_name>/` in Nmap's three output formats (`.nmap`, `.xml`, `.gnmap`). A `<team>_latest.xml` backup is kept per target for diffing, alongside a `<team>_known_hosts.json` file that tracks all previously seen hosts and ports.
@@ -168,7 +180,7 @@ Create the file at `/etc/systemd/system/GT-Top1000.service`:
 Description=Run Top1000 GlitchTrap Script
 
 [Service]
-ExecStart=/usr/bin/python3 /home/user/GlitchTrap/GlitchTrap.py
+ExecStart=/usr/bin/python3 /home/user/GlitchTrap/GlitchTrap.py scan1.json ./results --webhook /home/user/GlitchTrap/webhook.txt
 WorkingDirectory=/home/user/GlitchTrap
 User=user
 ```

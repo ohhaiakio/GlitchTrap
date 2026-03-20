@@ -1,5 +1,5 @@
 {
-  "args": "-T4 --top-ports 1000 -A --host-timeout 100s --stats-every 30s",
+  "args": "-T4 --top-ports 1000 -n --open --host-timeout 100s --stats-every 30s",
   "timeout": "300",
   "name": "CCDC2026",
   "scans": [

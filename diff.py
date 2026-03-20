@@ -5,16 +5,16 @@ import requests
 from datetime import datetime
 import sys
 
-# Deal with Discord webhook URL in a global way
-webhook = Path(__file__).parent / "webhook.link"
-if not webhook.exists():
-    print("[!] Webhook file does not exist")
-    sys.exit(1)
-with open(webhook) as f:
-    WEBHOOK_URL = f.read().strip()
+WEBHOOK_URL = None
+
+def init_webhook(url: str):
+    global WEBHOOK_URL
+    WEBHOOK_URL = url
 
 def send_discord(content: str):
     # Send a message to the Discord webhook. Splits if over 2000 chars.
+    if not WEBHOOK_URL:
+        return
     chunks = [content[i:i+2000] for i in range(0, len(content), 2000)]
     for chunk in chunks:
         requests.post(WEBHOOK_URL, json={"content": chunk})
@@ -46,24 +46,6 @@ def build_message(result, team, scan_name) -> str:
 
     return "\n".join(lines)
 
-# Testing function please ignore :-P
-def test():
-    print("test!!!!!!!!!!!!!!!!!!!!!!")
-    new = "/home/akio/git/OldManTouchy/results/quick/team01_latest.xml"
-    old = "/home/akio/git/OldManTouchy/results/quick/team01_20260308_224138.xml"
-
-    webhook = Path(__file__).parent / "webhook.link"
-    if not webhook.exists():
-        print("[!] Webhook file does not exist")
-        sys.exit(1)
-    with open(webhook) as f:
-        WEBHOOK_URL = f.read().strip()
-    
-    tracker = NmapTracker("results/quick/known_hosts.json")
-    result = tracker.process_scan(new)
-
-    message = build_message(result, "team01", "quick")
-    send_discord(message)
 
 def diff(report, path, team_name, scan_name):
     
